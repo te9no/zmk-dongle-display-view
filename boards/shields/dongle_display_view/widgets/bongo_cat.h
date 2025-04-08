@@ -8,6 +8,7 @@
 
 #include <lvgl.h>
 #include <zephyr/kernel.h>
+#define CANVAS_SIZE 68
 
 struct zmk_widget_bongo_cat {
     sys_snode_t node;
