@@ -165,39 +165,47 @@ ZMK_SUBSCRIPTION(widget_output_status, zmk_ble_active_profile_changed);
 ZMK_SUBSCRIPTION(widget_output_status, zmk_usb_conn_state_changed);
 
 int zmk_widget_output_status_init(struct zmk_widget_output_status *widget, lv_obj_t *parent) {
+    static lv_color_t cbuf[CANVAS_SIZE * CANVAS_SIZE];  // キャンバスバッファ
+
     widget->obj = lv_obj_create(parent);
+    lv_obj_set_size(widget->obj, CANVAS_SIZE, CANVAS_SIZE);
 
-    lv_obj_set_size(widget->obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-
-    lv_obj_t *usb = lv_img_create(widget->obj);
-    lv_obj_align(usb, LV_ALIGN_TOP_LEFT, 1, 4);
-    lv_img_set_src(usb, &sym_usb);
-
-    lv_obj_t *usb_hid_status = lv_img_create(widget->obj);
-    lv_obj_align_to(usb_hid_status, usb, LV_ALIGN_BOTTOM_LEFT, 2, -7);
-
-    lv_obj_t *bt = lv_img_create(widget->obj);
-    lv_obj_align_to(bt, usb, LV_ALIGN_OUT_RIGHT_TOP, 6, 0);
-    lv_img_set_src(bt, &sym_bt);
-
-    lv_obj_t *bt_number = lv_img_create(widget->obj);
-    lv_obj_align_to(bt_number, bt, LV_ALIGN_OUT_RIGHT_TOP, 2, 7);
-
-    lv_obj_t *bt_status = lv_img_create(widget->obj);
-    lv_obj_align_to(bt_status, bt, LV_ALIGN_OUT_RIGHT_TOP, 2, 1);
+    // キャンバスの作成
+    lv_obj_t *canvas = lv_canvas_create(widget->obj);
+    lv_canvas_set_buffer(canvas, cbuf, CANVAS_SIZE, CANVAS_SIZE, LV_IMG_CF_TRUE_COLOR);
+    lv_obj_center(canvas);
     
-    static lv_style_t style_line;
-    lv_style_init(&style_line);
-    lv_style_set_line_width(&style_line, 2);
+    // キャンバスの背景を設定
+    lv_canvas_fill_bg(canvas, LVGL_BACKGROUND, LV_OPA_COVER);
 
-    lv_obj_t *selection_line;
-    selection_line = lv_line_create(widget->obj);
-    lv_line_set_points(selection_line, selection_line_points, 2);
-    lv_obj_add_style(selection_line, &style_line, 0);
-    lv_obj_align_to(selection_line, usb, LV_ALIGN_OUT_TOP_LEFT, 3, -1);
- 
+    // USBアイコンの作成と配置
+    lv_draw_img_dsc_t img_dsc;
+    lv_draw_img_dsc_init(&img_dsc);
+    
+    // USBアイコンを描画
+    lv_canvas_draw_img(canvas, 1, 4, &sym_usb, &img_dsc);
+
+    // USBステータスアイコンを描画
+    lv_canvas_draw_img(canvas, 3, 14, &sym_ok, &img_dsc);
+
+    // Bluetoothアイコンを描画
+    lv_canvas_draw_img(canvas, 18, 4, &sym_bt, &img_dsc);
+
+    // Bluetooth番号を描画
+    lv_canvas_draw_img(canvas, 32, 11, sym_num[0], &img_dsc);
+
+    // Bluetoothステータスを描画
+    lv_canvas_draw_img(canvas, 32, 5, &sym_ok, &img_dsc);
+
+    // 選択ラインを描画
+    lv_draw_line_dsc_t line_dsc;
+    init_line_dsc(&line_dsc, LVGL_FOREGROUND, 2);
+    lv_canvas_draw_line(canvas, 0, 0, 13, 0, &line_dsc);
+
+    // キャンバスを回転
+    rotate_canvas(canvas, cbuf);
+
     sys_slist_append(&widgets, &widget->node);
-
     widget_output_status_init();
     return 0;
 }
